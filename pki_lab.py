@@ -397,11 +397,7 @@ def verify_chain(leaf_cert, intermediate_cert, root_cert):
         
         # Verify signature
         try:
-            parent.public_key().verify(
-                child.signature,
-                child.tbs_certificate_bytes,
-                child.signature_hash_algorithm
-            )
+            child.verify_directly_issued_by(parent)
             print(f"  ✓ Signature valid: {child.subject} <- {parent.subject}")
         except Exception as e:
             print(f"  ✗ Signature INVALID: {e}")

@@ -157,7 +157,7 @@ def test_pki_lab():
             capture_output=True,
             text=True,
             timeout=60,
-            cwd=os.path.dirname(os.path.abspath(__file__))
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
         if result.returncode != 0:
             errors.append(f"pki_lab.py exited with code {result.returncode}: {result.stderr}")
