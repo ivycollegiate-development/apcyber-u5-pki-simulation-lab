@@ -1,0 +1,55 @@
+name: Grade PKI Simulation Lab
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cryptography
+      
+      - name: Run PKI Lab
+        run: python pki_lab.py
+      
+      - name: Validate findings.csv
+        run: python tests/test_pki.py
+      
+      - name: Check certificate files exist
+        run: |
+          echo "Checking certificate files..."
+          ls -la ca/root_ca/
+          ls -la ca/intermediate_ca/
+          ls -la ca/certs/
+          ls -la ca/crl/
+      
+      - name: Verify certificate chain with openssl
+        run: |
+          # Verify root CA is self-signed
+          openssl verify -CAfile ca/root_ca/root_ca.crt ca/root_ca/root_ca.crt
+          
+          # Verify intermediate signed by root
+          cat ca/intermediate_ca/intermediate_ca.crt ca/root_ca/root_ca.crt > chain_root_intermediate.pem
+          openssl verify -CAfile ca/root_ca/root_ca.crt ca/intermediate_ca/intermediate_ca.crt
+          
+          # Verify server cert chain
+          cat ca/certs/server.crt ca/intermediate_ca/intermediate_ca.crt ca/root_ca/root_ca.crt > chain_server.pem
+          openssl verify -CAfile ca/root_ca/root_ca.crt -untrusted ca/intermediate_ca/intermediate_ca.crt ca/certs/server.crt
+          
+          echo "All certificate chains verified!"
